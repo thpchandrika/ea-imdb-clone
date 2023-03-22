@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: movie-service
+#
+#  cloud:
+#    vault:
+#      kv:
+#        enabled: true
+#      uri: http://vault:8200
+##      uri: http://localhost:8200
+#      token: hvs.sgC76qysfMYMIAomuynnsGKK
+#      generic:
+#        backend: secrets
+#        enabled: true
+#        default-context: dbCredentials
+#      scheme: http
+

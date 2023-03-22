@@ -1,0 +1,37 @@
+services:
+  postgres-comment-service:
+    container_name: postgres-comment-service
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Admin@123
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - comment-service-net
+
+  comment-service:
+    container_name: comment-service
+    image: userchan/comment-service:latest
+    build: .
+    ports:
+      - "1111:9090"
+
+    depends_on:
+      - postgres-comment-service
+    networks:
+      - comment-service-net
+    environment:
+      - DB_CONN=postgres-comment-service
+
+volumes:
+  postgres:
+
+networks:
+  comment-service-net:
+    driver: bridge
+    name: comment-service-net

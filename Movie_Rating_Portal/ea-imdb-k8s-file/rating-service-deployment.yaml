@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rating-module
+  labels:
+    app: rating-module
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rating-module
+  template:
+    metadata:
+      labels:
+        app: rating-module
+    spec:
+      containers:
+      - name: rating-module
+        image: sourav40/review-service:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: APP_PROFILE
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: app_profile
+        - name: MYSQL_URL
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_url
+        - name: MYSQL_PORT
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_port
+        - name: MYSQL_DATABASE_NAME_USER
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_database_name_user          
+        - name: MYSQL_USERNAME
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-username
+        - name: MYSQL_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+spec:
+  selector:
+    app: rating-module
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

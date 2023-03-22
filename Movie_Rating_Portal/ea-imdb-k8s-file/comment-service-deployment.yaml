@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comment-module
+  labels:
+    app: comment-module
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comment-module
+  template:
+    metadata:
+      labels:
+        app: comment-module
+    spec:
+      containers:
+      - name: comment-module
+        image: sourav40/comment-service:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: APP_PROFILE
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: app_profile
+        - name: MYSQL_URL
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_url
+        - name: MYSQL_PORT
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_port
+        - name: MYSQL_DATABASE_NAME_USER
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_database_name_user          
+        - name: MYSQL_USERNAME
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-username
+        - name: MYSQL_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: comment-service
+spec:
+  selector:
+    app: comment-module
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
