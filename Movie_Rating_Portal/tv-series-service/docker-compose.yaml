@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+
+  springboot-app:
+    image: crisnaxtha/tv-series-service
+    restart: always
+    build: .
+    ports:
+      - 8000-8999:8080
+    depends_on:
+      - mysqldb
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST: mysqldb
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: ea-tv-series
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: password
+    networks:
+      - spring-batch-mysql
+
+  mysqldb:
+    container_name: mysqldb
+    image: mysql
+    volumes:
+      - /Users/crisnaxtha/mysql/data:/var/lib/mysql
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_DATABASE: ea-tv-series
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - spring-batch-mysql
+
+networks:
+  spring-batch-mysql:

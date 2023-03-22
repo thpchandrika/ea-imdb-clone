@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ea-imdb-configmap
+data:
+  app_profile: prod
+  mysql_url: mysqldb-service
+  mysql_port: "3306"
+  mysql_database_name_user: product_service
+  mysql_database_name_movie: movie_service
+  mysql_database_name_tv-series: tv-series_service
+  mysql_database_name_rating: rating_service
+  mysql_database_name_comment: comment_service
+  JWT_PREFIX: Bearer

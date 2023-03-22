@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+
+  springboot-app:
+    image: crisnaxtha/config-server
+    restart: always
+    build: .
+    ports:
+      - 8000-8999:8888

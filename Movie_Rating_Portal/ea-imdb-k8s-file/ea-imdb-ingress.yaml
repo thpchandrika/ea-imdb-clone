@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-default-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: ea-imdb.com
+    http:
+      paths:
+      - path: /user(/|$)(.*)
+        pathType: Prefix  
+        backend:
+          service:
+            name: user-service
+            port: 
+              number: 8080
+      - path: /email(/|$)(.*)
+        pathType: Prefix  
+        backend:
+          service:
+            name: email-service
+            port: 
+              number: 8080
+              

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-module
+  labels:
+    app: user-module
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-module
+  template:
+    metadata:
+      labels:
+        app: user-module
+    spec:
+      containers:
+      - name: user-module
+        image: sourav40/user-service:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: APP_PROFILE
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: app_profile
+        - name: MYSQL_URL
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_url
+        - name: MYSQL_PORT
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_port
+        - name: MYSQL_DATABASE_NAME_USER
+          valueFrom: 
+            configMapKeyRef:
+              name: ea-imdb-configmap
+              key: mysql_database_name_user          
+        - name: MYSQL_USERNAME
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-username
+        - name: MYSQL_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: ea-imdb-mysql-secret
+              key: mysql-root-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-module
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

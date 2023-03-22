@@ -1,0 +1,338 @@
+version: '3.8'
+
+services:
+
+  service-discovery:
+    image: crisnaxtha/service-discovery
+    restart: always
+    build: .
+    ports:
+      - 8761:8761
+
+  cloud-gateway:
+    image: crisnaxtha/api-gateway-service
+    restart: always
+    build: .
+    ports:
+      - 8090:8090
+
+  config-server:
+    image: crisnaxtha/config-server
+    restart: always
+    build: .
+    ports:
+      - 8888:8888
+
+  elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.17.7
+      container_name: elasticsearch_springboot
+      environment:
+          - bootstrap.memory_lock=true
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+          - "discovery.type=single-node"
+          - xpack.security.enabled=false
+      ports:
+          - "9200:9200"
+      volumes:
+          - elasticsearch_data:/usr/share/elasticsearch/data
+      networks:
+          - elastic
+
+  kibana:
+      image: docker.elastic.co/kibana/kibana:7.17.7
+      container_name: kibana_springboot
+      ports:
+          - "5601:5601"
+      environment:
+          ELASTICSEARCH_URL: http://elasticsearch:9200
+          ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+      depends_on:
+          - elasticsearch
+      networks:
+          - elastic
+
+  logstash:
+      image: docker.elastic.co/logstash/logstash:7.17.7
+      container_name: logstash_springboot
+      volumes:
+        - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+        - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      ports:
+        - "5044:5044"
+        - "5400:5400/tcp"
+        - "5400:5400/udp"
+        - "9600:9600"
+      environment:
+        LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+      networks:
+        - elastic
+      depends_on:
+        - elasticsearch
+
+  rabbitmq:
+    image: rabbitmq:3.9.11-management-alpine
+    container_name: rabbitmq-microservices
+    ports:
+      - "5672:5672"
+      - "15672:15672" 
+
+  cache:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes: 
+      - cache:/data         
+
+  tv-series-service:
+    image: crisnaxtha/tv-series-service
+    restart: always
+    build: .
+    ports:
+      - 8075:8080
+    depends_on:
+      - mysqldb-tv-series
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST: mysqldb-tv-series
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: tv-series-service
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  mysqldb-tv-series:
+    container_name: mysqldb-tv-series
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/mysqldb-tv-series/data:/var/lib/mysql
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_DATABASE: tv-series-service
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  rating-service:
+    image: sourav40/review-service:latest
+    restart: always
+    build: .
+    ports:
+      - 8076:8080
+    depends_on:
+      - mysqldb-rating
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST: mysqldb-rating
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: review-service
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  mysqldb-rating:
+    container_name: mysqldb-rating
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/mysqldb-rating/data:/var/lib/mysql
+    ports:
+      - 3308:3306
+    environment:
+      MYSQL_DATABASE: review-service
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  comment-service:
+    image: sourav40/comment-service:latest
+    restart: always
+    build: .
+    ports:
+      - 8077:8080
+    depends_on:
+      - mysqldb-comment
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST:  mysqldb-comment
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: comment-service
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  mysqldb-comment:
+    container_name: mysqldb-comment
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/mysqldb-comment/data:/var/lib/mysql
+    ports:
+      - 3309:3306
+    environment:
+      MYSQL_DATABASE: comment-service
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  user-service:
+    image: sourav40/user-service:latest
+    restart: always
+    build: .
+    ports:
+      - 8078:8080
+    depends_on:
+      - mysqldb-user
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST:  mysqldb-user
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: user-service
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root@12345
+      JWT_SECRET: M9DFD9DN3KDOO9DKKDUUMDDLLDLJSLALFJKKLFLJDKKKFLLLJKD
+      JWT_PREFIX: Bearer
+    networks:
+      - ea-imdb
+
+  mysqldb-user:
+    container_name: mysqldb-user
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/mysqldb-user/data:/var/lib/mysql
+    ports:
+      - 3310:3306
+    environment:
+      MYSQL_DATABASE: user-service
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:legacy
+    environment:
+      DB_VENDOR: MYSQL
+      DB_ADDR: mysqldb-keyclock
+      DB_DATABASE: keycloak
+      DB_USER: root
+      DB_PASSWORD: root@12345
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the MySQL JDBC driver documentation in order to use it.
+      #JDBC_PARAMS: "connectTimeout=30000"
+    ports:
+      - 8070:8070
+    depends_on:
+      - mysqldb-keyclock
+    networks:
+      - ea-imdb 
+
+  mysqldb-keyclock:
+    container_name: mysqldb-keyclock
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/ea-keyclock/data:/var/lib/mysql
+    ports:
+      - 3311:3306
+    environment:
+      MYSQL_DATABASE: keycloak
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181      
+
+  kafka:
+     image: confluentinc/cp-kafka:latest
+     depends_on:
+       - zookeeper
+     ports:
+       - 29092:29092
+     environment:
+       KAFKA_BROKER_ID: 1
+       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 
+
+  # zipkin:
+  #   image: openzipkin/zipkin
+  #   container_name: zipkin
+  #   environment:
+  #     - STORAGE_TYPE=mysql
+  #     - MYSQL_HOST=mysql-zipkin
+  #   ports:
+  #     - 9411:9411
+  #   depends_on:
+  #     - storage    
+
+  # storage:
+  #   image: openzipkin/zipkin-mysql
+  #   container_name: zipkin-storage
+
+  # mysql-zipkin:
+  #   container_name: mysql-zipkin
+  #   image: mysql
+  #   volumes:
+  #     - /Users/sourav.shrestha/zipkin-ea-mysql/data:/var/lib/mysql
+  #   ports:
+  #     - 3312:3306
+  #   environment:
+  #     MYSQL_DATABASE: zipkin-ea
+  #     MYSQL_ROOT_PASSWORD: root@12345
+  #   networks:
+  #     - ea-imdb 
+
+
+  movie-service:
+    image: sarozme/movie-service:latest
+    restart: always
+    build: .
+    ports:
+      - 8079:8080
+    depends_on:
+      - mysqldb-movie
+    environment:
+      APP_PROFILE: prod
+      MYSQL_HOST: mysqldb-movie
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE_NAME: movie-service
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: root@12345
+    networks:
+      - ea-imdb
+
+  mysqldb-movie:
+    container_name: mysqldb-movie
+    image: mysql
+    volumes:
+      - /Users/sourav.shrestha/mysqldb-movie/data:/var/lib/mysql
+    ports:
+      - 3312:3306
+    environment:
+      MYSQL_DATABASE: movie-service
+      MYSQL_ROOT_PASSWORD: root@12345
+    networks:
+      - ea-imdb                    
+
+networks:
+  ea-imdb:
+  elastic:
+    driver: bridge
+
+volumes:
+  cache:
+    driver: local
+  elasticsearch_data:
+    driver: local
+
