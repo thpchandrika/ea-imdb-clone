@@ -1,7 +1,7 @@
 
 ## Movie Rating Portal
  
-In this project, you will develop a clone of IMDB website. To get a better understanding of the project, check out imdb.com.
+It is clone of IMDB website. To get a better understanding of the project, check out imdb.com.
 
 In this application, users can create, rate and write comments about movies and tv series. Users can create favorite lists and they can share their lists with other users.
 
@@ -19,7 +19,7 @@ There will be 5 main resource servers:
  - Rating Service 
 	 - CRUD operations for ratings.
 
-Your project must have
+Project have
 - Discovery Server
 - API Gateway
 - Configuration Server
@@ -47,34 +47,16 @@ Your project must have
 
 #### Technical Details
 ---
-* Use inheritance for tv series and movies. 
-* Use appropriate hibernate fetch strategies.
-* Use RabbitMQ and Kafka.
-* Each micro-service must contain a Dockerfile to create a docker image.
-* Implement Eventual Consistency.
-* Each service must have `data.sql` for dummy data.
+* Used inheritance for tv series and movies. 
+* Used appropriate hibernate fetch strategies.
+* Used RabbitMQ and Kafka.
+* Each micro-service contain a Dockerfile to create a docker image.
+* Implemented Eventual Consistency.
+* Each service have `data.sql` for dummy data.
 * Have 1 Kubernetes Deployment Configuration file.
-* Create a Postman collection for each endpoint.
-* Create API documentation with Swagger.
-* Prepare a docker compose file to run your project.
-* Use Circuit Breaker pattern for 5 methods.
-* Use ELK Stack to store your application logs.
+* Created a Postman collection for each endpoint.
+* Created API documentation with Swagger.
+* Prepared a docker compose file to run project.
+* Used Circuit Breaker pattern for 5 methods.
+* Used ELK Stack to store application logs.
 	* Please refer to https://www.elastic.co/what-is/elk-stack
-
-
-#### Submission
----
-* Upload your source code and project documentation to the Sakai.
-* Every member should submit the project to the Sakai.
-* Deadline: Sunday Nov 27th at 11:55 PM.
-* Project will be evaluated based on your code quality. It is possible that I will need to schedule meetings with students about their source-code.
-
-#### Important Notes
----
- * You are not allowed to share codes with your classmates. If detected, you will get NC.
- 
-* Remember to respect the code honor submission policy. All written code must be original. Presenting something as one’s own work when it came from another source is plagiarism and is forbidden.
-    
-* Plagiarism is a very serious thing in all American academic institutions and is guarded against vigilantly by every professor.
- 
-
